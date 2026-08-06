@@ -1670,9 +1670,8 @@ function onCanvasClick(e) {
     return;
   }
 
-  // Click planet → center camera on it & open info panel
+  // Click planet → center camera on it in 3D space
   focusPlanet(key);
-  showPlanetPanel(key);
 }
 
 // ─── Focus Planet ─────────────────────────────────────────
@@ -1693,10 +1692,18 @@ function focusPlanet(key) {
   gsap.killTweensOf(camera.position);
   gsap.killTweensOf(controls.target);
 
+  const isMobile = window.innerWidth <= 768;
+
   const targetCamPos = new THREE.Vector3(
     pos.x + dist * 0.7,
-    pos.y + dist * 0.4,
+    pos.y + (isMobile ? dist * 0.8 : dist * 0.4),
     pos.z + dist * 0.7
+  );
+
+  const targetLookPos = new THREE.Vector3(
+    pos.x,
+    pos.y - (isMobile ? dist * 0.3 : 0),
+    pos.z
   );
 
   gsap.to(camera.position, {
@@ -1708,19 +1715,21 @@ function focusPlanet(key) {
   });
 
   gsap.to(controls.target, {
-    x: pos.x,
-    y: pos.y,
-    z: pos.z,
+    x: targetLookPos.x,
+    y: targetLookPos.y,
+    z: targetLookPos.z,
     duration: 1.5,
     ease: 'power2.inOut',
     onUpdate: () => controls.update(),
   });
 
-  showToast(`Centered on ${PLANET_DATA[key]?.name || key} (Rotate 360° with mouse)`);
+  showToast(`Centered on ${PLANET_DATA[key]?.name || key} (Rotate 360° in 3D view)`);
+  document.getElementById('btn-back-system')?.classList.remove('hidden');
 }
 
 function resetCamera() {
   focusedPlanet = null;
+  document.getElementById('btn-back-system')?.classList.add('hidden');
   gsap.killTweensOf(camera.position);
   gsap.killTweensOf(controls.target);
   gsap.to(camera.position, { x: 0, y: 55, z: 130, duration: 1.8, ease: 'power2.inOut' });
@@ -1730,6 +1739,7 @@ function resetCamera() {
 
 function returnToGalaxyView() {
   focusedPlanet = null;
+  document.getElementById('btn-back-system')?.classList.add('hidden');
   gsap.killTweensOf(camera.position);
   gsap.killTweensOf(controls.target);
   if (galaxyMesh) gsap.killTweensOf(galaxyMesh.material);

@@ -7,32 +7,32 @@ import { toggleSound, playChirp, playWarpSound, playYouTubeBGM } from './audio.j
 const $ = id => document.getElementById(id);
 
 const panels = {
-  planet:       $('planet-panel'),
+  planet: $('planet-panel'),
   encyclopedia: $('encyclopedia-panel'),
-  missions:     $('missions-panel'),
-  settings:     $('settings-panel'),
-  about:        $('about-panel'),
-  mainMenu:     $('main-menu'),
+  missions: $('missions-panel'),
+  settings: $('settings-panel'),
+  about: $('about-panel'),
+  mainMenu: $('main-menu'),
 };
 
 // ─── State ────────────────────────────────────────────────
-let onFocusPlanet   = null;
-let onResetCamera   = null;
-let onExploreZoom   = null;
+let onFocusPlanet = null;
+let onResetCamera = null;
+let onExploreZoom = null;
 let onReturnToGalaxy = null;
-let onEncycPlanet   = null;
-let toastTimeout    = null;
-let eclipseTimeout  = null;
+let onEncycPlanet = null;
+let toastTimeout = null;
+let eclipseTimeout = null;
 
 // ═══════════════════════════════════════════════════════════
 // INITIALIZATION
 // ═══════════════════════════════════════════════════════════
 export function initUI(callbacks) {
-  onFocusPlanet    = callbacks.focusPlanet;
-  onResetCamera    = callbacks.resetCamera;
-  onExploreZoom    = callbacks.exploreZoom;
+  onFocusPlanet = callbacks.focusPlanet;
+  onResetCamera = callbacks.resetCamera;
+  onExploreZoom = callbacks.exploreZoom;
   onReturnToGalaxy = callbacks.returnToGalaxy;
-  onEncycPlanet    = callbacks.openEncyclopedia;
+  onEncycPlanet = callbacks.openEncyclopedia;
 
   buildEncyclopedia();
   buildMissions();
@@ -46,7 +46,7 @@ export function initUI(callbacks) {
 // ─── Android / Mobile Touch Tutorial & Detection ──────────
 function detectMobileAndSetupTutorial() {
   const isAndroid = /Android/i.test(navigator.userAgent);
-  const isMobile  = isAndroid || /iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window || navigator.maxTouchPoints > 0);
+  const isMobile = isAndroid || /iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || ('ontouchstart' in window || navigator.maxTouchPoints > 0);
 
   if (isMobile) {
     // Update top bar hints for touch
@@ -90,10 +90,12 @@ function bindMenuButtons() {
   $('btn-explore').addEventListener('click', () => {
     playWarpSound();
     playYouTubeBGM();
-    gsap.to('#main-menu', { opacity: 0, duration: 0.5, onComplete: () => {
-      $('main-menu').classList.add('hidden');
-      $('main-menu').style.opacity = '1';
-    }});
+    gsap.to('#main-menu', {
+      opacity: 0, duration: 0.5, onComplete: () => {
+        $('main-menu').classList.add('hidden');
+        $('main-menu').style.opacity = '1';
+      }
+    });
 
     if (onExploreZoom) {
       onExploreZoom(() => {
@@ -173,6 +175,12 @@ function bindHUDButtons(callbacks) {
     });
   });
 
+  $('btn-back-system')?.addEventListener('click', () => {
+    playChirp();
+    if (onResetCamera) onResetCamera();
+    $('btn-back-system').classList.add('hidden');
+  });
+
   // Feature buttons
   $('btn-toggle-orbits').addEventListener('click', () => {
     playChirp();
@@ -236,62 +244,51 @@ function bindSettingsCallbacks(callbacks) {
   $('set-bloom-strength').addEventListener('input', e => callbacks.setBloomStrength(parseFloat(e.target.value)));
 }
 
-// ═══════════════════════════════════════════════════════════
-// PLANET INFO PANEL
-// ═══════════════════════════════════════════════════════════
-export function showPlanetPanel(key) {
-  const d = PLANET_DATA[key];
-  if (!d) return;
+// // ═══════════════════════════════════════════════════════════
+// // PLANET INFO PANEL
+// // ═══════════════════════════════════════════════════════════
+// export function showPlanetPanel(key) {
+//   const d = PLANET_DATA[key];
+//   if (!d) return;
 
-  $('planet-panel').dataset.planet = key;
+//   $('planet-panel').dataset.planet = key;
 
-  // Header
-  $('pp-icon').textContent  = d.icon;
-  $('pp-name').textContent  = d.name;
-  $('pp-type').textContent  = d.type;
+//   // Header
+//   $('pp-icon').textContent  = d.icon;
+//   $('pp-name').textContent  = d.name;
+//   $('pp-type').textContent  = d.type;
 
-  // Stats
-  $('pp-diameter').textContent = d.diameter;
-  $('pp-gravity').textContent  = d.gravity;
-  $('pp-distance').textContent = d.distance;
-  $('pp-day').textContent      = d.dayLength;
-  $('pp-year').textContent     = d.yearLength;
-  $('pp-moons').textContent    = d.moons;
-  $('pp-temp').textContent     = d.temperature;
-  $('pp-atmo').textContent     = d.atmosphere;
+//   // Stats
+//   $('pp-diameter').textContent = d.diameter;
+//   $('pp-gravity').textContent  = d.gravity;
+//   $('pp-distance').textContent = d.distance;
+//   $('pp-day').textContent      = d.dayLength;
+//   $('pp-year').textContent     = d.yearLength;
+//   $('pp-moons').textContent    = d.moons;
+//   $('pp-temp').textContent     = d.temperature;
+//   $('pp-atmo').textContent     = d.atmosphere;
 
-  // Description & fun fact
-  $('pp-desc').textContent    = d.description;
-  $('pp-funfact').textContent = d.funFact;
+//   // Description & fun fact
+//   $('pp-desc').textContent    = d.description;
+//   $('pp-funfact').textContent = d.funFact;
 
-  playWarpSound();
+//   playWarpSound();
 
-  // Interactive 3D Model Embed
-  const embedBox = $('pp-embed-container');
-  const embedDiv = $('pp-embed');
-  if (d.embed && embedBox && embedDiv) {
-    embedDiv.innerHTML = d.embed;
-    embedBox.classList.remove('hidden');
-  } else if (embedBox && embedDiv) {
-    embedDiv.innerHTML = '';
-    embedBox.classList.add('hidden');
-  }
+//   // Animate open — remove inert so close button is reachable
+//   const panel = $('planet-panel');
+//   panel.removeAttribute('inert');
+//   panel.removeAttribute('aria-hidden');
+//   panel.classList.add('open');
+// }
 
-  // Animate open — remove inert so close button is reachable
-  const panel = $('planet-panel');
-  panel.removeAttribute('inert');
-  panel.removeAttribute('aria-hidden');
-  panel.classList.add('open');
-}
-
-export function closePlanetPanel() {
-  const panel = $('planet-panel');
-  panel.classList.remove('open');
-  // Re-apply inert so keyboard / screen-reader focus cannot reach
-  // elements inside the offscreen panel
-  panel.setAttribute('inert', '');
-  if (onResetCamera) onResetCamera();
-}
+// export function closePlanetPanel() {
+//   const panel = $('planet-panel');
+//   panel.classList.remove('open');
+//   // Re-apply inert so keyboard / screen-reader focus cannot reach
+//   // elements inside the offscreen panel
+//   panel.setAttribute('inert', '');
+//   if (onResetCamera) onResetCamera();
+// }
 
 // ═══════════════════════════════════════════════════════════
 // ENCYCLOPEDIA

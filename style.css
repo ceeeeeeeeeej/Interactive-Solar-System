@@ -391,7 +391,34 @@ input  { font-family: inherit; }
   box-shadow: 0 0 8px var(--cyan);
   animation: blink 2s ease-in-out infinite;
 }
-@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+/* Back to Solar System Button */
+#btn-back-system {
+  position: absolute;
+  top: 104px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: rgba(0, 212, 255, 0.18);
+  border: 1px solid var(--cyan);
+  border-radius: 20px;
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--cyan);
+  box-shadow: 0 0 16px var(--cyan-glow);
+  cursor: pointer;
+  pointer-events: auto;
+  z-index: 500;
+  transition: all var(--trans-fast);
+}
+#btn-back-system:hover {
+  background: rgba(0, 212, 255, 0.35);
+  box-shadow: 0 0 25px var(--cyan);
+  transform: translateY(-1px);
+}
 
 /* Keyboard Hints */
 .key-hints {
@@ -426,15 +453,20 @@ kbd {
 
 /* Bottom Bar */
 .hud-bottom {
-  position: absolute;
+  position: fixed;
   bottom: 0; left: 0; right: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 14px 20px;
-  background: linear-gradient(0deg, rgba(0,0,8,0.8) 0%, transparent 100%);
-  flex-wrap: wrap;
+  padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(0deg, rgba(3,7,18,0.95) 0%, rgba(3,7,18,0.7) 70%, transparent 100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(0, 212, 255, 0.15);
+  box-shadow: 0 -4px 20px rgba(0,0,0,0.5);
+  pointer-events: auto;
+  z-index: 500;
 }
 
 /* Time Controls */
@@ -1004,9 +1036,19 @@ kbd {
 
   /* HUD Layout & Bottom Controls */
   .hud-bottom {
-    padding: 10px 12px env(safe-area-inset-bottom, 12px);
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0px));
     gap: 8px;
-    background: linear-gradient(180deg, transparent 0%, rgba(3,7,18,0.95) 30%);
+    background: rgba(3,7,18,0.95);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-top: 1px solid rgba(0, 212, 255, 0.25);
+    z-index: 999;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
   }
   .controls-row {
     gap: 6px;
