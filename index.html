@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#030712">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>Interactive Solar System</title>
+  <meta name="description"
+    content="Explore all 8 planets of our solar system in stunning 3D. Animated orbits, realistic textures, and an immersive space experience.">
+  <!-- Inline SVG favicon — no extra file download needed -->
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2600;</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- 3D Canvas -->
+  <canvas id="solar-canvas"></canvas>
+
+  <!-- ═══════════════════════════════════════════
+       LOADING SCREEN
+  ══════════════════════════════════════════════ -->
+  <div id="loading-screen">
+    <div class="loading-content">
+      <div class="loading-sun">
+        <div class="sun-pulse"></div>
+        <div class="sun-core">☀</div>
+      </div>
+      <h1 class="loading-title">SOLAR EXPLORER</h1>
+
+      <p class="loading-subtitle">Interactive Solar System</p>
+      <div class="loading-bar-wrap">
+        <div class="loading-bar" id="loading-bar"></div>
+        <div class="loading-shimmer"></div>
+      </div>
+      <p class="loading-text" id="loading-text">Generating star field…</p>
+    </div>
+    <div class="loading-stars" id="loading-stars"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MAIN MENU
+  ══════════════════════════════════════════════ -->
+  <div id="main-menu" class="hidden">
+    <div class="menu-bg-overlay"></div>
+    <div class="menu-container">
+      <div class="menu-header">
+        <div class="menu-logo-wrap">
+          <div class="menu-logo-glow"></div>
+          <span class="menu-logo-icon">☀</span>
+        </div>
+        <h1 class="menu-title">SOLAR EXPLORER</h1>
+        <p class="menu-subtitle">Journey through our Solar System</p>
+        <div class="menu-divider"></div>
+      </div>
+      <nav class="menu-nav" role="navigation" aria-label="Main menu">
+        <button class="menu-btn" id="btn-explore">
+          <span class="menu-btn-icon">▶</span>
+          <span class="menu-btn-text">Explore</span>
+          <span class="menu-btn-arrow">›</span>
+        </button>
+        <button class="menu-btn" id="btn-encyclopedia">
+          <span class="menu-btn-icon">📖</span>
+          <span class="menu-btn-text">Planet Encyclopedia</span>
+          <span class="menu-btn-arrow">›</span>
+        </button>
+        <button class="menu-btn" id="btn-missions">
+          <span class="menu-btn-icon">🏆</span>
+          <span class="menu-btn-text">Space Missions</span>
+          <span class="menu-btn-arrow">›</span>
+        </button>
+        <button class="menu-btn" id="btn-settings">
+          <span class="menu-btn-icon">⚙</span>
+          <span class="menu-btn-text">Settings</span>
+          <span class="menu-btn-arrow">›</span>
+        </button>
+        <button class="menu-btn" id="btn-about">
+          <span class="menu-btn-icon">ℹ</span>
+          <span class="menu-btn-text">About</span>
+          <span class="menu-btn-arrow">›</span>
+        </button>
+      </nav>
+      <div class="menu-footer">
+        <span>Developed by <strong>L4RK!N</strong> </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       HUD OVERLAY (shown during exploration)
+  ══════════════════════════════════════════════ -->
+  <div id="hud" class="hidden">
+
+    <!-- Top Bar -->
+    <div class="hud-top">
+      <button id="btn-menu-return" class="hud-top-btn" aria-label="Return to menu">
+        <span>☰</span> Menu
+      </button>
+      <div class="hud-brand">SOLAR EXPLORER</div>
+      <div class="hud-hints" id="hud-hints">
+        <span>Left Drag: Rotate</span>
+        <span>Scroll: Zoom</span>
+        <span>Dbl-Click: Focus</span>
+      </div>
+    </div>
+
+    <!-- Planet Name Tooltip -->
+    <div id="planet-tooltip" class="hidden" aria-live="polite">
+      <span id="tooltip-name"></span>
+    </div>
+
+    <!-- Camera Mode Badge -->
+    <div id="camera-mode-badge">
+      <span class="cam-dot"></span>
+      <span id="cam-mode-label">FREE CAMERA</span>
+    </div>
+
+    <!-- Keyboard Reference -->
+    <div class="key-hints" id="key-hints">
+      <div class="key-row"><kbd>W A S D</kbd> Move</div>
+      <div class="key-row"><kbd>Shift</kbd> Boost</div>
+      <div class="key-row"><kbd>Space</kbd> Pause</div>
+      <div class="key-row"><kbd>F</kbd> Focus</div>
+      <div class="key-row"><kbd>R</kbd> Reset</div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="hud-bottom">
+      <!-- Time Controls -->
+      <div class="time-controls" id="time-controls">
+        <span class="tc-label">TIME</span>
+        <button class="tc-btn" data-speed="0.1" id="tc-0.1">0.1×</button>
+        <button class="tc-btn active" data-speed="1" id="tc-1">1×</button>
+        <button class="tc-btn" data-speed="10" id="tc-10">10×</button>
+        <button class="tc-btn" data-speed="100" id="tc-100">100×</button>
+        <button class="tc-btn" data-speed="1000" id="tc-1000">1000×</button>
+        <button class="tc-btn tc-pause" id="btn-pause" aria-label="Pause">⏸</button>
+      </div>
+
+      <!-- Camera Modes -->
+      <div class="cam-mode-btns">
+        <span class="tc-label">CAMERA</span>
+        <button class="cam-mode-btn active" data-mode="free" id="cm-free">Free</button>
+        <button class="cam-mode-btn" data-mode="follow" id="cm-follow">Follow</button>
+        <button class="cam-mode-btn" data-mode="cinematic" id="cm-cinematic">Cinematic</button>
+      </div>
+
+      <!-- Feature Buttons -->
+      <div class="feature-btns">
+        <button class="feat-btn" id="btn-toggle-orbits" aria-label="Toggle orbit paths">⭕ Orbits</button>
+        <button class="feat-btn" id="btn-toggle-distance" aria-label="Distance mode">📏 Distance</button>
+        <button class="feat-btn" id="btn-spawn-spacecraft" aria-label="Spacecraft mode">🚀 Spacecraft</button>
+        <button class="feat-btn" id="btn-toggle-sound" aria-label="Toggle ambient audio">🔈 Audio</button>
+      </div>
+    </div>
+
+  </div><!-- /#hud -->
+
+  <!-- ═══════════════════════════════════════════
+       PLANET INFO PANEL (slides in from right)
+  ══════════════════════════════════════════════ -->
+  <div id="planet-panel" class="side-panel" role="dialog" aria-labelledby="pp-name" inert>
+    <button class="sp-close" id="planet-panel-close" aria-label="Close panel">✕</button>
+
+    <div class="sp-header">
+      <div class="sp-icon" id="pp-icon">🌍</div>
+      <div class="sp-title-block">
+        <h2 class="sp-name" id="pp-name">Earth</h2>
+        <p class="sp-type" id="pp-type">Terrestrial Planet</p>
+      </div>
+    </div>
+
+    <div class="sp-divider"></div>
+
+    <div class="sp-stats" id="pp-stats">
+      <div class="stat-item">
+        <span class="stat-label">Diameter</span>
+        <span class="stat-val" id="pp-diameter">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Gravity</span>
+        <span class="stat-val" id="pp-gravity">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Distance from Sun</span>
+        <span class="stat-val" id="pp-distance">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Day Length</span>
+        <span class="stat-val" id="pp-day">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Year Length</span>
+        <span class="stat-val" id="pp-year">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Moons</span>
+        <span class="stat-val" id="pp-moons">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Temperature</span>
+        <span class="stat-val" id="pp-temp">—</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Atmosphere</span>
+        <span class="stat-val" id="pp-atmo">—</span>
+      </div>
+    </div>
+
+    <div class="sp-desc" id="pp-desc"></div>
+
+    <div class="sp-funfact">
+      <div class="ff-label">💡 Fun Fact</div>
+      <div class="ff-text" id="pp-funfact"></div>
+    </div>
+
+    <div class="sp-embed-section hidden" id="pp-embed-container">
+      <div class="sp-embed-title">🌐 Interactive 3D Model</div>
+      <div class="sketchfab-embed-wrapper" id="pp-embed"></div>
+    </div>
+
+    <div class="sp-actions">
+      <button class="sp-action-btn" id="btn-focus-planet">🎯 Focus Camera</button>
+      <button class="sp-action-btn secondary" id="btn-encyc-planet">📚 Encyclopedia</button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ENCYCLOPEDIA PANEL
+  ══════════════════════════════════════════════ -->
+  <div id="encyclopedia-panel" class="overlay-panel hidden" role="dialog" aria-label="Planet Encyclopedia">
+    <div class="op-header">
+      <div class="op-title">🌌 Planet Encyclopedia</div>
+      <button class="op-close" id="encyclopedia-close" aria-label="Close">✕</button>
+    </div>
+    <div class="op-body">
+      <div class="encyc-grid" id="encyc-grid">
+        <!-- Generated by ui.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       MISSIONS PANEL
+  ══════════════════════════════════════════════ -->
+  <div id="missions-panel" class="overlay-panel hidden" role="dialog" aria-label="Space Missions">
+    <div class="op-header">
+      <div class="op-title">🚀 Space Missions</div>
+      <button class="op-close" id="missions-close" aria-label="Close">✕</button>
+    </div>
+    <div class="op-body">
+      <div class="missions-list" id="missions-list">
+        <!-- Generated by ui.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SETTINGS PANEL
+  ══════════════════════════════════════════════ -->
+  <div id="settings-panel" class="overlay-panel hidden" role="dialog" aria-label="Settings">
+    <div class="op-header">
+      <div class="op-title">⚙ Settings</div>
+      <button class="op-close" id="settings-close" aria-label="Close">✕</button>
+    </div>
+    <div class="op-body">
+      <div class="settings-grid">
+        <div class="setting-group">
+          <h3 class="sg-title">Visual Effects</h3>
+          <label class="toggle-item">
+            <span class="ti-label">Bloom Glow</span>
+            <div class="ti-toggle">
+              <input type="checkbox" id="set-bloom" checked>
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+          <label class="toggle-item">
+            <span class="ti-label">Show Orbit Paths</span>
+            <div class="ti-toggle">
+              <input type="checkbox" id="set-orbits" checked>
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+          <label class="toggle-item">
+            <span class="ti-label">Asteroid Belt</span>
+            <div class="ti-toggle">
+              <input type="checkbox" id="set-asteroids" checked>
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+          <label class="toggle-item">
+            <span class="ti-label">Star Twinkling</span>
+            <div class="ti-toggle">
+              <input type="checkbox" id="set-twinkle" checked>
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+          <label class="toggle-item">
+            <span class="ti-label">Shooting Stars</span>
+            <div class="ti-toggle">
+              <input type="checkbox" id="set-shooting" checked>
+              <span class="toggle-slider"></span>
+            </div>
+          </label>
+        </div>
+        <div class="setting-group">
+          <h3 class="sg-title">Bloom Intensity</h3>
+          <input type="range" id="set-bloom-strength" min="0" max="3" step="0.1" value="1.2" class="setting-slider">
+          <div class="slider-labels"><span>Off</span><span>Max</span></div>
+        </div>
+        <div class="setting-group">
+          <h3 class="sg-title">Star Count</h3>
+          <input type="range" id="set-stars" min="5000" max="30000" step="1000" value="20000" class="setting-slider">
+          <div class="slider-labels"><span>5K</span><span>30K</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       ABOUT PANEL
+  ══════════════════════════════════════════════ -->
+  <div id="about-panel" class="overlay-panel hidden" role="dialog" aria-label="About">
+    <div class="op-header">
+      <div class="op-title">ℹ About Solar Explorer</div>
+      <button class="op-close" id="about-close" aria-label="Close">✕</button>
+    </div>
+    <div class="op-body">
+      <div class="about-content">
+        <div class="about-logo">☀</div>
+        <h2 class="about-title">SOLAR EXPLORER</h2>
+        <p class="about-ver">Interactive 3D Solar System</p>
+        <div class="about-dev">
+          <span class="dev-label">DEVELOPED BY</span>
+          <div class="dev-name">⚡ L4RK!N</div>
+        </div>
+        <p class="about-text">
+          A cinematic, browser-based solar system built entirely with WebGL and Three.js.
+          Explore all 8 planets with animated orbits, realistic shaders, and detailed encyclopedia entries.
+        </p>
+        <div class="about-tech">
+          <h3>Technologies</h3>
+          <div class="tech-tags">
+            <span class="tech-tag">Three.js r168</span>
+            <span class="tech-tag">WebGL 2.0</span>
+            <span class="tech-tag">GLSL Shaders</span>
+            <span class="tech-tag">GSAP 3</span>
+            <span class="tech-tag">ES Modules</span>
+          </div>
+        </div>
+        <div class="about-controls">
+          <h3>Controls</h3>
+          <table class="controls-table">
+            <tr>
+              <td>Left Drag</td>
+              <td>Rotate camera</td>
+            </tr>
+            <tr>
+              <td>Right Drag</td>
+              <td>Pan camera</td>
+            </tr>
+            <tr>
+              <td>Scroll</td>
+              <td>Zoom in/out</td>
+            </tr>
+            <tr>
+              <td>Double Click</td>
+              <td>Focus on planet</td>
+            </tr>
+            <tr>
+              <td>W A S D</td>
+              <td>Fly through space</td>
+            </tr>
+            <tr>
+              <td>Shift</td>
+              <td>Speed boost</td>
+            </tr>
+            <tr>
+              <td>Space</td>
+              <td>Pause simulation</td>
+            </tr>
+            <tr>
+              <td>F</td>
+              <td>Focus selected planet</td>
+            </tr>
+            <tr>
+              <td>R</td>
+              <td>Reset camera</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       NOTIFICATIONS & FLOATING UI
+  ══════════════════════════════════════════════ -->
+
+  <!-- Eclipse Alert -->
+  <div id="eclipse-alert" class="floating-alert hidden" role="alert" aria-live="assertive">
+    <span class="alert-icon">🌑</span>
+    <div class="alert-body">
+      <strong>SOLAR ECLIPSE DETECTED</strong>
+      <span>Moon aligned between Earth and Sun</span>
+    </div>
+  </div>
+
+  <!-- Android Touch Tutorial Alert -->
+  <div id="android-tutorial-modal" class="floating-alert hidden" role="dialog" aria-label="Android Touch Tutorial">
+    <span class="alert-icon">📱</span>
+    <div class="alert-body">
+      <strong style="color:var(--cyan);">ANDROID TOUCH GUIDE</strong>
+      <span>• <b>Tap planet</b> to focus & 360° rotate</span>
+      <span>• <b>1-Finger Drag</b> to orbit system</span>
+      <span>• <b>2-Finger Pinch</b> to zoom in & out</span>
+      <span>• <b>Zoom Out</b> to view the Milky Way!</span>
+    </div>
+    <button class="fi-close" id="btn-close-android-tut" style="margin-left:8px;">Got it!</button>
+  </div>
+
+  <!-- Distance Panel -->
+  <div id="distance-panel" class="floating-info hidden" role="status" aria-live="polite">
+    <div class="fi-header">📏 Distance Ruler</div>
+    <div class="fi-body" id="distance-text">Click a planet to set Point A…</div>
+    <div class="fi-sub" id="distance-result"></div>
+    <button class="fi-close" id="distance-close">Cancel</button>
+  </div>
+
+  <!-- Spacecraft Panel -->
+  <div id="spacecraft-panel" class="floating-info hidden" role="status" aria-live="polite">
+    <div class="fi-header">🚀 Spacecraft</div>
+    <div class="fi-body" id="spacecraft-text">Select destination planet…</div>
+    <div class="fi-sub" id="spacecraft-eta"></div>
+    <button class="fi-close" id="spacecraft-close">Dismiss</button>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast hidden" role="alert" aria-live="polite">
+    <span id="toast-text"></span>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       SCRIPTS
+  ══════════════════════════════════════════════ -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.168.0/examples/jsm/"
+    }
+  }
+  </script>
+  <!-- Hidden YouTube Background Music Player (Video ID: 5XEotddQbPY) -->
+  <div id="youtube-audio-container"
+    style="position:fixed; width:1px; height:1px; opacity:0.001; pointer-events:none; z-index:-999; top:-100px; left:-100px;">
+    <iframe id="youtube-bgm" width="100" height="100"
+      src="https://www.youtube.com/embed/5XEotddQbPY?enablejsapi=1&autoplay=1&loop=1&playlist=5XEotddQbPY"
+      title="Background Music" allow="autoplay">
+    </iframe>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script type="module" src="main.js"></script>
+
+</body>
+
+</html>
